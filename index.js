@@ -1,56 +1,69 @@
 import express from "express";
 import { readFile, writeFile } from "fs/promises";
-import { nanoid } from "nanoid";
+
 
 const __dirname = import.meta.dirname;
 
 const app = express();
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const filePath = __dirname + "/db/todos.json";
 
-app.get("/todos", async (req, res) => {
+
+const filePath = __dirname + "/db/deportes.json";
+
+
+// Ruta cliente para leer una lista de los deportes con su precio y agregar o eliminar deportes
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + '/index.html')
+})
+
+
+// Leer (JSON)
+app.get("/deportes", async (req, res) => {
   try {
-    const todos = await readFile(filePath, "utf8");
-    return res.json(JSON.parse(todos));
+    const deportes = await readFile(filePath, "utf8");
+    return res.json(JSON.parse(deportes));
+
   } catch (error) {
     console.log(error);
     return res.status(500).json({ ok: false });
   }
 });
 
-app.post("/todos", async (req, res) => {
+
+// Crear
+app.post("/agregar", async (req, res) => {
   try {
-    const { title = "" } = req.body;
-    const newTodo = { id: nanoid(), title, completed: false };
+    const {nombre, precio} = req.body
+    const nuevoDeporte = { nombre, precio };
+    const stringDeportes = await readFile(filePath, "utf8");
+    const deportes = JSON.parse(stringDeportes);
+    deportes.push(nuevoDeporte);
+    await writeFile(filePath, JSON.stringify(deportes));
+    return res.json(nuevoDeporte);
 
-    const stringTodos = await readFile(filePath, "utf8");
-    const todos = JSON.parse(stringTodos);
-    todos.push(newTodo);
-
-    await writeFile(filePath, JSON.stringify(todos));
-
-    return res.json(newTodo);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ ok: false });
   }
 });
 
-app.delete("/todos/:id", async (req, res) => {
+
+// Borrar
+app.delete("/borrar/:nombre", async (req, res) => {
   try {
-    const { id } = req.params;
+    const { nombre } = req.params;
+    const stringDeportes = await readFile(filePath, "utf8");
+    const deportes = JSON.parse(stringDeportes);
+    const nuevosDeportes = deportes.filter((deporte) => deporte.nombre !== nombre);
 
-    const stringTodos = await readFile(filePath, "utf8");
-    const todos = JSON.parse(stringTodos);
-    const newTodos = todos.filter((todo) => todo.id !== id);
-
-    if (todos.length === newTodos.length) {
+    if (deportes.length === nuevosDeportes.length) {
       return res.status(404).json({ ok: false });
     }
-
-    await writeFile(filePath, JSON.stringify(newTodos));
+    await writeFile(filePath, JSON.stringify(nuevosDeportes));
 
     return res.json({ ok: true });
   } catch (error) {
@@ -59,38 +72,34 @@ app.delete("/todos/:id", async (req, res) => {
   }
 });
 
-app.put("/todos/:id", async (req, res) => {
+
+// Editar
+app.put("/editar/:nombre", async (req, res) => {
   try {
-    const { id } = req.params;
-    const { title, completed } = req.body;
-
-    const stringTodos = await readFile(filePath, "utf8");
-    const todos = JSON.parse(stringTodos);
-
-    const index = todos.findIndex((todo) => todo.id === id);
-
-    if (index === -1) {
+    const { nombre } = req.params;
+    const { nuevoPrecio } = req.body;
+    const stringDeportes = await readFile(filePath, "utf8");
+    let deportes = JSON.parse(stringDeportes);
+    const indiceDeporte = deportes.findIndex((deporte) => deporte.nombre === nombre);
+    if (indiceDeporte === -1) {
       return res.status(404).json({ ok: false });
     }
-
-    if (title) {
-      todos[index].title = title;
-    }
-
-    if (completed !== undefined) {
-      todos[index].completed = completed;
-    }
-
-    await writeFile(filePath, JSON.stringify(todos));
-
-    return res.json(todos[index]);
+    deportes[indiceDeporte].precio = nuevoPrecio;
+    await writeFile(filePath, JSON.stringify(deportes));
+    return res.json(deportes[indiceDeporte]);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ ok: false });
   }
 });
 
-const PORT = process.env.PORT || 5000;
+// Ruta 404
+app.all('*', (req, res) => {
+  res.status(404).send('Sitio no encontrado...');
+});
+
+
+const PORT = process.env.PORT || 5003;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

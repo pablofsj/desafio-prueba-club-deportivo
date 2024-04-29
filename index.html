@@ -14,29 +14,25 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.20.0/axios.min.js"></script>
 </head>
-<div class="container">
 
+<div class="container">
   <h1>Deportes</h1>
   <div action="/agregar" class="border rounded p-4">
     <div class="form-group row">
       <label class="col-sm-2 col-form-label">Nombre</label>
-
       <div class="col-sm-10">
         <input id="nombre" type="text" class="form-control" nombre="nombre" />
       </div>
     </div>
     <div class="form-group row">
       <label class="col-sm-2 col-form-label">Precio</label>
-
       <div class="col-sm-10">
         <input id="precio" type="text" class="form-control" precio="precio" />
       </div>
     </div>
-
     <button class="btn btn-info" onclick="agregar()">Agregar</button>
   </div>
 </div>
-
 <h5 class="text-center my-4">Tabla de deportes registrados</h5>
 <table class="table w-25 m-auto border">
   <thead>
@@ -49,16 +45,13 @@
   </thead>
   <tbody id="cuerpo"></tbody>
 </table>
-
 <script>
-
   const regexTexto = /^(\S+ ?)*\S+$/;
   const regexNumero = /^\d+$/;
 
   $(document).ready(function () {
     getData()
   })
-
   async function getData() {
     $('#cuerpo').html('')
     await axios.get('/deportes').then((data) => {
@@ -80,22 +73,18 @@
     })
   }
 
-
   function preEdit(nombre, precio) {
     $('#nombreModal').val(nombre)
     $('#precioModal').val(precio)
   }
 
   async function agregar() {
-
   let nombre = $('#nombre').val();
   let precio = $('#precio').val();
-
   if(!regexTexto.test(nombre) || !regexNumero.test(precio)){
         alert(" Ingrese nombre y precio validos");
         return;
   }
-
   await axios.post('/agregar', { nombre, precio}) 
     .then(response => {
       alert(`${response.data.nombre} agregado`)
@@ -107,16 +96,13 @@
 
   $('#exampleModal').modal('hide');
 }
-
   async function edit() {
-    
     let nombre = $('#nombreModal').val()
     let nuevoPrecio = $('#precioModal').val()
     if(!regexNumero.test(nuevoPrecio)){
         alert(" Ingrese precio valido");
         return;
     }
-    
     await axios.put(`/editar/${nombre}`, { nuevoPrecio }).then(response => {
       alert(`Precio modificado`)
       getData()
@@ -145,19 +131,16 @@
         </form>
         <div class="form-group row">
           <label class="col-sm-2 col-form-label">Nombre</label>
-
           <div class="col-sm-10">
             <input id="nombreModal" disabled type="text" class="form-control" nombre="nombre" />
           </div>
         </div>
         <div class="form-group row">
           <label class="col-sm-2 col-form-label">Precio</label>
-
           <div class="col-sm-10">
             <input id="precioModal" type="text" class="form-control" precio="precio" />
           </div>
         </div>
-
         <button class="btn btn-warning" onclick="edit()">Editar</button>
       </div>
     </div>
